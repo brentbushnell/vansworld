@@ -1,35 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useRef } from 'react';
 
-function App() {
-  const [count, setCount] = useState(0)
+const CameraComponent: React.FC = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+    }
+  };
+
+  const takePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) {
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    // Ensure the video is playing
+    if (video.paused || video.ended) {
+      return;
+    }
+
+    // Draw the current frame of the video onto the canvas
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert the canvas content to a data URL representing the image
+      const photoDataUrl = canvas.toDataURL('image/png');
+    
+      // You can now use the photoDataUrl as needed (e.g., send it to a server, display it, etc.)
+      console.log('Photo taken:', photoDataUrl);
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div>
+      <video ref={videoRef} autoPlay playsInline muted style={{ maxWidth: '100%' }} />
+      <button onClick={startCamera}>Start Camera</button>
+      <button onClick={takePhoto}>Take Photo</button>
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+    </div>
+  );
+};
 
-export default App
+export default CameraComponent;
